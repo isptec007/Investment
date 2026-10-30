@@ -1,163 +1,211 @@
-# Investment Frontend
+# Investment
 
-Frontend do projeto de controle de investimentos. A aplicação utiliza Next.js
-com App Router, Tailwind CSS v4 e shadcn/ui em um monorepo gerenciado por
-pnpm e Turborepo.
+Projeto de controle de investimentos, composto por uma API em AdonisJS e uma
+aplicação web em Next.js.
+
+## Stack
+
+- **Backend:** AdonisJS 7, TypeScript, Lucid ORM e SQLite
+- **Frontend:** Next.js 16, React, Tailwind CSS v4 e shadcn/ui
+- **Gerenciamento do frontend:** pnpm e Turborepo
+- **Autenticação:** AdonisJS Auth e sessões por cookie
+
+## Estrutura do projeto
+
+```text
+Investment/
+├── Investment_back/       # API AdonisJS
+│   ├── app/               # Controllers, models, validators e middleware
+│   ├── config/            # Configurações da aplicação e do banco
+│   ├── database/          # Migrations e schema
+│   ├── start/             # Rotas e bootstrap da aplicação
+│   └── package.json
+├── investment_front/      # Monorepo Next.js
+│   ├── apps/web/          # Aplicação web
+│   ├── packages/ui/       # Componentes compartilhados shadcn/ui
+│   └── package.json
+└── README.md
+```
 
 ## Pré-requisitos
 
 - Node.js `>=20.9.0`
-- pnpm (a versão declarada pelo projeto é `11.25.0`)
+- npm, para o backend
+- pnpm, para o frontend (versão declarada: `11.25.0`)
 - Git
 
 Confira as versões instaladas:
 
 ```bash
 node --version
+npm --version
 pnpm --version
 ```
 
-## Estrutura do projeto
+## Configuração do backend
 
-```text
-investment_front/
-├── apps/
-│   └── web/                 # Aplicação Next.js
-│       ├── app/             # Rotas e layouts do App Router
-│       ├── components/      # Componentes específicos da aplicação
-│       └── lib/             # Utilitários e regras do app
-├── packages/
-│   ├── ui/                  # Componentes compartilhados e estilos
-│   │   └── src/components/  # Componentes shadcn/ui
-│   ├── eslint-config/       # Configurações compartilhadas do ESLint
-│   └── typescript-config/   # Configurações compartilhadas do TypeScript
-└── package.json             # Scripts do workspace
-```
-
-## Configuração inicial
-
-A partir da raiz deste projeto (`investment_front`), instale as dependências:
+Abra um terminal na raiz do projeto e instale as dependências da API:
 
 ```bash
+cd Investment_back
+npm install
+```
+
+Crie o arquivo de ambiente a partir do exemplo:
+
+```bash
+cp .env.example .env
+```
+
+O scaffold utiliza SQLite por padrão. O banco será criado em
+`Investment_back/tmp/db.sqlite3`. O `.env.example` já define:
+
+| Variável | Valor padrão | Descrição |
+| --- | --- | --- |
+| `HOST` | `localhost` | Host da API. |
+| `PORT` | `3333` | Porta da API. |
+| `NODE_ENV` | `development` | Ambiente de execução. |
+| `APP_KEY` | vazio | Chave usada pela aplicação; preencha para ambientes persistentes. |
+| `SESSION_DRIVER` | `cookie` | Driver das sessões. |
+| `CORS_ORIGIN` | comentado | Origens autorizadas para o frontend. |
+
+Para desenvolvimento local, configure o CORS permitindo o frontend:
+
+```env
+CORS_ORIGIN=http://localhost:3000
+```
+
+Gere uma chave de aplicação antes de usar autenticação em um ambiente real:
+
+```bash
+node ace generate:key
+```
+
+Se houver migrations pendentes, execute:
+
+```bash
+node ace migration:run
+```
+
+## Configuração do frontend
+
+Em outro terminal, instale as dependências do monorepo web:
+
+```bash
+cd investment_front
 pnpm install
 ```
 
-No estado atual do scaffold, não é necessário criar um arquivo `.env`: não há
-variáveis de ambiente declaradas para iniciar a aplicação.
+O scaffold atual não possui variáveis de ambiente obrigatórias no frontend.
+Quando a integração com a API for adicionada, mantenha as variáveis públicas
+do Next.js em `investment_front/apps/web/.env.local`, usando o prefixo
+`NEXT_PUBLIC_` quando o valor precisar ser acessado no navegador.
 
-## Fluxo de desenvolvimento
+## Executar o projeto
 
-1. Acesse a pasta do frontend:
-
-	```bash
-	cd investment_front
-	```
-
-2. Inicie o servidor de desenvolvimento:
-
-	```bash
-	pnpm dev
-	```
-
-	O Turbo executa o script `dev` do app `web`. Abra
-	[http://localhost:3000](http://localhost:3000) no navegador.
-
-3. Faça as alterações em `apps/web` ou nos pacotes compartilhados.
-
-4. Antes de abrir um pull request, execute as validações:
-
-	```bash
-	pnpm lint
-	pnpm typecheck
-	pnpm build
-	```
-
-Para executar um comando apenas no app web, use o filtro do pnpm:
+### Backend
 
 ```bash
-pnpm --filter web lint
-pnpm --filter web typecheck
-pnpm --filter web build
+cd Investment_back
+npm run dev
 ```
 
-## Scripts disponíveis
+A API ficará disponível em [http://localhost:3333](http://localhost:3333).
+O endpoint de verificação atual é:
+
+```text
+GET http://localhost:3333/
+```
+
+### Frontend
+
+```bash
+cd investment_front
+pnpm dev
+```
+
+A aplicação ficará disponível em [http://localhost:3000](http://localhost:3000).
+
+Para usar os dois serviços, mantenha o backend e o frontend em terminais
+separados. O frontend deve consumir a API em `http://localhost:3333`.
+
+## Scripts do backend
+
+Execute dentro de `Investment_back`:
 
 | Comando | Descrição |
 | --- | --- |
-| `pnpm dev` | Inicia o desenvolvimento de todos os apps do workspace. |
-| `pnpm build` | Gera o build de produção com Turborepo. |
-| `pnpm lint` | Executa o ESLint nos pacotes e apps. |
-| `pnpm typecheck` | Executa a verificação de tipos do TypeScript. |
-| `pnpm format` | Formata arquivos TypeScript e TSX com Prettier. |
-| `pnpm --filter web start` | Inicia o build de produção localmente. |
+| `npm run dev` | Inicia o servidor com hot reload. |
+| `npm run build` | Gera o build de produção da API. |
+| `npm run start` | Inicia a API compilada. |
+| `npm run test` | Executa os testes com Japa. |
+| `npm run lint` | Executa o ESLint. |
+| `npm run typecheck` | Verifica os tipos TypeScript. |
+| `npm run format` | Formata os arquivos do backend. |
 
-Depois do build, o fluxo de produção local é:
+## Scripts do frontend
+
+Execute dentro de `investment_front`:
+
+| Comando | Descrição |
+| --- | --- |
+| `pnpm dev` | Inicia o frontend via Turborepo. |
+| `pnpm build` | Gera o build de produção. |
+| `pnpm lint` | Executa o ESLint. |
+| `pnpm typecheck` | Verifica os tipos TypeScript. |
+| `pnpm format` | Formata arquivos TypeScript e TSX. |
+| `pnpm --filter web start` | Inicia o frontend compilado. |
+
+## Validação antes do commit
+
+Backend:
 
 ```bash
+cd Investment_back
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
+
+Frontend:
+
+```bash
+cd investment_front
+pnpm lint
+pnpm typecheck
 pnpm build
-pnpm --filter web start
 ```
 
-## Tailwind CSS e estilos
+## Componentes shadcn/ui
 
-Os estilos globais e os tokens de tema ficam em
-`packages/ui/src/styles/globals.css`. O Tailwind CSS v4 é carregado por meio
-do PostCSS, sem um arquivo `tailwind.config.*` tradicional.
-
-O layout raiz de `apps/web` importa os estilos compartilhados:
-
-```tsx
-import "@workspace/ui/globals.css"
-```
-
-Prefira as classes utilitárias existentes e os tokens CSS do tema (`bg-background`,
-`text-foreground`, `border-border` etc.) para manter os modos claro e escuro
-consistentes.
-
-## shadcn/ui
-
-Os componentes shadcn/ui são mantidos no pacote compartilhado `@workspace/ui`.
-Para adicionar um componente, execute na raiz de `investment_front`:
+Os componentes compartilhados ficam em `investment_front/packages/ui`. Para
+adicionar um novo componente, execute na raiz do frontend:
 
 ```bash
+cd investment_front
 pnpm dlx shadcn@latest add card -c apps/web
 ```
 
-Substitua `card` pelo componente desejado. O componente será criado em
-`packages/ui/src/components`.
-
-Use os componentes dentro da aplicação por meio do alias do workspace:
+Use o componente na aplicação com o alias do workspace:
 
 ```tsx
 import { Button } from "@workspace/ui/components/button"
 ```
 
-As configurações do shadcn/ui estão em `apps/web/components.json` e
-`packages/ui/components.json`. A biblioteca de ícones configurada é
-`lucide-react`.
-
-## Convenções de implementação
-
-- Rotas, layouts e páginas ficam em `apps/web/app`.
-- Componentes reutilizáveis de interface ficam em `packages/ui`.
-- Componentes específicos de uma tela ficam em `apps/web/components`.
-- Use TypeScript e mantenha os imports compartilhados com os aliases
-  `@workspace/ui/...`.
-- Execute `pnpm format` após alterações de formatação e rode `pnpm lint` e
-  `pnpm typecheck` antes de considerar a tarefa concluída.
+Mais detalhes do desenvolvimento do frontend estão em
+[`investment_front/README.md`](investment_front/README.md).
 
 ## Solução de problemas
 
-Se as dependências estiverem inconsistentes, remova apenas `node_modules` e o
-lockfile gerado localmente não versionado e reinstale:
+Se a porta `3333` estiver ocupada, altere `PORT` no arquivo
+`Investment_back/.env`. Se a porta `3000` estiver ocupada, inicie o frontend
+em outra porta:
 
 ```bash
-rm -rf node_modules apps/*/node_modules packages/*/node_modules
-pnpm install
-```
-
-Se a porta `3000` estiver ocupada, inicie o Next.js em outra porta:
-
-```bash
+cd investment_front
 pnpm --filter web dev -- -p 3001
 ```
+
+Nesse caso, atualize também `CORS_ORIGIN` no `.env` do backend para
+`http://localhost:3001`.
